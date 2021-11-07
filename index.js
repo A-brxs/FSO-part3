@@ -1,6 +1,8 @@
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const Person = require('./models/person')
+require('dotenv').config()
 const app = express()
 app.use(express.json())
 app.use(cors())
@@ -54,23 +56,31 @@ app.get('/info', (request, response) => {
 })
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person
+  .find({})
+  .then(p => {
+      response.json(p)
+    })
 })
+
 app.get('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
-  const person = persons.find(p => p.id === id)
-  if (!person) {
-    response.status(404).end()
-  } else {
-    response.json(person)
-  }
+  Person.find({ id: request.params.id }).then(p => {
+    if (!p) {
+      response.status(404).end()
+    } else {
+      response.json(p)
+    }    
+  })
 
 })
+
 app.delete('/api/persons/:id', (request, response) => {
   const id = Number(request.params.id)
   persons = persons.filter(p => p.id !== id)
   response.status(204).end()
 })
+
 app.post('/api/persons', (request, response) => {
   const body = request.body
   if (!body.name) {
@@ -87,15 +97,16 @@ app.post('/api/persons', (request, response) => {
     })
   }
 
-  const person = {
+  const person = new Person({
     name: body.name,
     number: body.number,
     id: getId(16000)
-  }
+  })
   
-  persons = persons.concat(person)
+  person.save().then(sp => {
+    response.json(sp)
+  })  
 
-  response.json(person)
 })
 
 const unknownEndpoint = (request, response) => {
