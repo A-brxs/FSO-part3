@@ -13,46 +13,40 @@ morgan.token('body', getBody = (request) => {
 })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let persons = [
-  { 
-    "id": 1,
-    "name": "Arto Hellas", 
-    "number": "040-123456"
-  },
-  { 
-    "id": 2,
-    "name": "Ada Lovelace", 
-    "number": "39-44-5323523"
-  },
-  { 
-    "id": 3,
-    "name": "Dan Abramov", 
-    "number": "12-43-234345"
-  },
-  { 
-    "id": 4,
-    "name": "Mary Poppendieck", 
-    "number": "39-23-6423122"
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
   }
-]
 
-let infoMsg = `
-  <div>
-    <p>There are ${persons.length} people</p>
-    <p>${Date()}</p>
-  </div>
-  `
-
-const getId = (maxId) => {
-  return Math.floor(Math.random() * maxId)
+  next(error)
 }
+
+const infoMsg = (persons) => {
+
+  return (
+    `
+      <div>
+        <p>There are ${persons} people</p>
+        <p>${Date()}</p>
+      </div>
+      `
+  )
+}
+
+
 
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
 })
 
 app.get('/info', (request, response) => {
-  response.send(infoMsg)
+  Person
+    .countDocuments({})
+    .then(p => {
+      response.send(infoMsg(p))
+    })
 })
 
 app.get('/api/persons', (request, response) => {
@@ -63,22 +57,30 @@ app.get('/api/persons', (request, response) => {
     })
 })
 
-app.get('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  Person.find({ id: request.params.id }).then(p => {
-    if (!p) {
-      response.status(404).end()
-    } else {
-      response.json(p)
-    }    
-  })
+app.get('/api/persons/:id', (request, response, next) => {
+  Person
+    .findById(request.params.id)
+    .then(p => {
+      if (p) {
+        response.json(p)
+      } else {
+        response.status(404).end()
+      }    
+    })
+    .catch(error => {
+      console.log("WHAT IS THIS")
+      next(error)
+    })
 
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-  const id = Number(request.params.id)
-  persons = persons.filter(p => p.id !== id)
-  response.status(204).end()
+app.delete('/api/persons/:id', (request, response, next) => {
+  Person
+    .findByIdAndRemove(request.params.id)
+    .then(p => {
+      response.status(204).end()
+    })
+    .catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response) => {
@@ -91,16 +93,11 @@ app.post('/api/persons', (request, response) => {
     return response.status(400).json({
       error: 'Number Missing'
     })
-  } else if (persons.find(p => p.name === body.name)) {
-    return response.status(400).json({
-      error: 'Name already exists'
-    })
   }
 
   const person = new Person({
     name: body.name,
     number: body.number,
-    id: getId(16000)
   })
   
   person.save().then(sp => {
@@ -109,12 +106,32 @@ app.post('/api/persons', (request, response) => {
 
 })
 
+app.put('/api/persons/:id', (request,response,next) => {
+  const body = request.body
+
+  const person = {
+    name: body.name,
+    number: body.number
+  }
+
+  Person
+    .findByIdAndUpdate(request.params.id, person, { new: true })
+    .then(p => {
+      response.json(p)
+    })
+    .catch(error => next(error))
+})
+
+
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: 'unknown endpoint' })
 }
 
 app.use(unknownEndpoint)
 
+
+// this has to be the last loaded middleware.
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
