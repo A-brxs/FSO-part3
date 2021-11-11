@@ -7,7 +7,7 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 app.use(express.static('build'))
-
+// eslint-disable-next-line no-undef
 morgan.token('body', getBody = (request) => {
   return JSON.stringify(request.body)
 })
@@ -53,8 +53,8 @@ app.get('/info', (request, response) => {
 
 app.get('/api/persons', (request, response) => {
   Person
-  .find({})
-  .then(p => {
+    .find({})
+    .then(p => {
       response.json(p)
     })
 })
@@ -67,10 +67,10 @@ app.get('/api/persons/:id', (request, response, next) => {
         response.json(p)
       } else {
         response.status(404).end()
-      }    
+      }
     })
     .catch(error => {
-      console.log("WHAT IS THIS")
+      console.log('What is this?')
       next(error)
     })
 
@@ -79,9 +79,7 @@ app.get('/api/persons/:id', (request, response, next) => {
 app.delete('/api/persons/:id', (request, response, next) => {
   Person
     .findByIdAndRemove(request.params.id)
-    .then(p => {
-      response.status(204).end()
-    })
+    .then(response.status(204).end())
     .catch(error => next(error))
 })
 
@@ -101,13 +99,12 @@ app.post('/api/persons', (request, response, next) => {
     name: body.name,
     number: body.number,
   })
-  
   person
     .save()
     .then(sp => sp.toJSON())
     .then(jsonSp => {
       response.json(jsonSp)
-    })  
+    })
     .catch(error => next(error))
 
 })
@@ -115,14 +112,12 @@ app.post('/api/persons', (request, response, next) => {
 
 app.put('/api/persons/:id', (request,response,next) => {
   const body = request.body
-  
   const person = {
     name: body.name,
     number: body.number
   }
-  
-  const opts = { 
-    runValidators: true, new: true 
+  const opts = {
+    runValidators: true, new: true
   }
   Person
     .findByIdAndUpdate(request.params.id, person, opts )
@@ -145,5 +140,5 @@ app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`)
 })
