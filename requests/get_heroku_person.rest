@@ -1,7 +1,10 @@
+GET https://rocky-sierra-43953.herokuapp.com/api/persons
+
+###
 POST https://rocky-sierra-43953.herokuapp.com/api/persons HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "Luisw213D",
+    "name": "Luisw213fcxD",
     "number": "33333324s3"
 }
